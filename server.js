@@ -1,4 +1,4 @@
-// server.js — Render-ready + Security-hardened (v7.5 compatible)
+// server.js — Render‑ready, secured, podium/payouts enabled (v7.5+)
 import express from 'express';
 import fs from 'fs';
 import path, { resolve } from 'path';
@@ -19,15 +19,14 @@ dotenv.config({ path: resolve(__dirname, '.env') });
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// ---------- Security: CORS + Helmet + rate limits ----------
+// ---------------- Security: CORS + Helmet + Rate limits ----------------
 const ALLOWED_ORIGINS = [
-  process.env.SITE_ORIGIN,            // e.g. https://yourdomain.com
+  process.env.SITE_ORIGIN,            // e.g., https://yourdomain.com
   process.env.RENDER_EXTERNAL_URL     // Render sets this automatically
 ].filter(Boolean);
 
 app.use(cors({
   origin: (origin, cb) => {
-    // Allow same-origin requests (no Origin header) and allowed list
     if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
     return cb(new Error('Not allowed by CORS'));
   }
@@ -35,38 +34,38 @@ app.use(cors({
 
 app.disable('x-powered-by');
 app.use(helmet({
-  contentSecurityPolicy: false,       // Turn on later once you whitelist exact sources
+  contentSecurityPolicy: false,       // turn on later after whitelisting exact sources
   crossOriginEmbedderPolicy: false
 }));
 
-// Global parsers
 app.use(express.json());
 
 // Rate limits
-const apiLimiter   = rateLimit({ windowMs: 15 * 60 * 1000, max: 300 }); // all /api/*
-const adminLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 50 });  // write/priv routes
+const apiLimiter   = rateLimit({ windowMs: 15 * 60 * 1000, max: 300 });
+const adminLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 50 });
 app.use('/api/', apiLimiter);
 
-// ---------- Data locations ----------
-const dataDir = path.join(__dirname, 'data');
-const settingsPath = path.join(dataDir, 'settings.json');
-const snapshotsDir = path.join(dataDir, 'snapshots');
+// ---------------- Data paths ----------------
+const dataDir       = path.join(__dirname, 'data');
+const settingsPath  = path.join(dataDir, 'settings.json');
+const snapshotsDir  = path.join(dataDir, 'snapshots');
 fs.mkdirSync(snapshotsDir, { recursive: true });
 
-// Archive visibility (default: protected)
+// Public archive flag (default protected)
 const SNAPSHOTS_PUBLIC = String(process.env.SNAPSHOTS_PUBLIC || '').toLowerCase() === 'true';
 
-// ---------- Defaults & helpers ----------
+// ---------------- Defaults & helpers ----------------
 const DEFAULT_SETTINGS = {
   period: 'weekly',                                    // 'weekly' | 'biweekly' | 'monthly'
-  countdown: { value: 7, unit: 'days' },              // weeks/days/hours/minutes
+  countdown: { value: 7, unit: 'days' },              // minutes/hours/days/weeks
   pageSize: 15,
   bannerTitle: '$500 Monthly Leaderboard',
   socials: [
     { name: 'Twitter', url: 'https://twitter.com/' },
     { name: 'Discord', url: 'https://discord.gg/' }
   ],
-  customRange: { enabled: false, start: '', end: '' }  // YYYY-MM-DD
+  customRange: { enabled: false, start: '', end: '' }, // YYYY-MM-DD
+  prizeConfig: { paidPlacements: 3, amounts: [300, 150, 50] } // rank 1..N payouts (USD)
 };
 const VALID_UNITS = ['minutes','hours','days','weeks'];
 
@@ -104,7 +103,13 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-// ---------- Debug (admin-only) ----------
+// ---------------- Admin auth probe (Basic) ----------------
+app.get('/api/auth', (req, res) => {
+  if (!checkBasicAuth(req)) return res.status(401).json({ ok: false });
+  res.json({ ok: true });
+});
+
+// ---------------- Debug (admin-only) ----------------
 app.get('/api/debug', requireAdmin, (_req, res) => {
   res.json({
     hasEnv: {
@@ -117,35 +122,47 @@ app.get('/api/debug', requireAdmin, (_req, res) => {
   });
 });
 
-// ---------- Auth probe (Basic) ----------
-app.get('/api/auth', (req, res) => {
-  if (!checkBasicAuth(req)) return res.status(401).json({ ok: false });
-  res.json({ ok: true });
-});
-
-// ---------- Settings ----------
+// ---------------- Settings ----------------
 app.get('/api/settings', (_req, res) => {
   const s = readSettings();
   let out = { ...DEFAULT_SETTINGS, ...s };
-  // Back-compat: if countdown was seconds
+
+  // Back-compat: if countdown was a raw seconds number
   if (typeof s?.countdown === 'number') {
     const value = Math.max(1, Math.round(s.countdown / 86400)) || 7;
     out = { ...DEFAULT_SETTINGS, ...s, countdown: { value, unit: 'days' } };
   }
+
   if (!out.bannerTitle) out.bannerTitle = DEFAULT_SETTINGS.bannerTitle;
   if (!Array.isArray(out.socials)) out.socials = DEFAULT_SETTINGS.socials;
   if (!out.customRange) out.customRange = DEFAULT_SETTINGS.customRange;
+
+  // prizeConfig normalize
+  if (!out.prizeConfig || typeof out.prizeConfig !== 'object') {
+    out.prizeConfig = DEFAULT_SETTINGS.prizeConfig;
+  } else {
+    const pc = out.prizeConfig;
+    out.prizeConfig = {
+      paidPlacements: Math.max(0, Math.min(100, Number(pc.paidPlacements || 0))),
+      amounts: Array.isArray(pc.amounts) ? pc.amounts.slice(0, 100).map(n => Number(n) || 0) : []
+    };
+  }
+
   out.pageSize = Math.min(100, Math.max(1, Number(out.pageSize || 15)));
   res.json(out);
 });
 
 app.post('/api/settings', requireAdmin, adminLimiter, (req, res) => {
-  const { period, countdown, pageSize, bannerTitle, socials, customRange } = req.body || {};
+  const { period, countdown, pageSize, bannerTitle, socials, customRange, prizeConfig } = req.body || {};
+
+  // Validate period/countdown/page
   if (!['weekly','biweekly','monthly'].includes(period)) return res.status(400).json({ error: 'Invalid period' });
   const value = Number(countdown?.value), unit = countdown?.unit;
   if (!Number.isFinite(value) || value < 0 || !VALID_UNITS.includes(unit)) return res.status(400).json({ error: 'Invalid countdown { value, unit }' });
   const size = Math.min(100, Math.max(1, Number(pageSize || 15)));
   const title = String(bannerTitle || '').slice(0, 80) || DEFAULT_SETTINGS.bannerTitle;
+
+  // Socials
   const soc = Array.isArray(socials)
     ? socials.slice(0,5).map(it => ({
         name: String(it?.name||'').slice(0,20) || 'Link',
@@ -153,6 +170,7 @@ app.post('/api/settings', requireAdmin, adminLimiter, (req, res) => {
       }))
     : DEFAULT_SETTINGS.socials;
 
+  // Custom range
   let cr = DEFAULT_SETTINGS.customRange;
   if (customRange && typeof customRange === 'object') {
     const en = !!customRange.enabled;
@@ -162,19 +180,29 @@ app.post('/api/settings', requireAdmin, adminLimiter, (req, res) => {
     cr = { enabled: en && isDate(s) && isDate(e), start: isDate(s) ? s : '', end: isDate(e) ? e : '' };
   }
 
+  // Prize config
+  let pc = DEFAULT_SETTINGS.prizeConfig;
+  if (prizeConfig && typeof prizeConfig === 'object') {
+    const paid = Math.max(0, Math.min(100, Number(prizeConfig.paidPlacements || 0)));
+    const amounts = Array.isArray(prizeConfig.amounts) ? prizeConfig.amounts.slice(0, paid).map(n => Number(n) || 0) : [];
+    pc = { paidPlacements: paid, amounts };
+  }
+
   const out = {
     period,
     countdown: { value: Math.floor(value), unit },
     pageSize: size,
     bannerTitle: title,
     socials: soc,
-    customRange: cr
+    customRange: cr,
+    prizeConfig: pc
   };
+
   writeSettings(out);
   res.json({ ok: true, settings: out });
 });
 
-// ---------- Range ----------
+// ---------------- Range ----------------
 app.get('/api/range', (req, res) => {
   try {
     const s = readSettings();
@@ -187,7 +215,7 @@ app.get('/api/range', (req, res) => {
   }
 });
 
-// ---------- Leaderboard (Rainbet proxy) ----------
+// ---------------- Leaderboard proxy (Rainbet) ----------------
 app.get('/api/leaderboard', async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit || '100', 10), 100);
@@ -203,8 +231,7 @@ app.get('/api/leaderboard', async (req, res) => {
       const data = Array.from({ length: limit }).map((_, i) => ({
         rank: i + 1,
         username: `${names[i % names.length]}${i + 1}`,
-        wagered: Math.floor(Math.random() * 100000),
-        bets: Math.floor(Math.random() * 1500 + 100),
+        wagered: Math.floor(Math.random() * 100000)
       }));
       return res.json({ data, meta: { start, end, mock: true } });
     }
@@ -226,7 +253,6 @@ app.get('/api/leaderboard', async (req, res) => {
         rank: i + 1,
         username: a?.username ?? `User${i+1}`,
         wagered: Number(a?.wagered_amount || 0),
-        bets: Number(a?.bets || 0),
         user_id: a?.user_id ?? a?.id ?? (1000 + i),
       }));
 
@@ -237,9 +263,8 @@ app.get('/api/leaderboard', async (req, res) => {
   }
 });
 
-// ---------- Snapshot (JSON + PNG)
-// Prevent concurrent Puppeteer runs (simple mutex)
-let snapshotRunning = false;
+// ---------------- Snapshot (JSON + PNG) ----------------
+let snapshotRunning = false; // simple mutex
 app.post('/api/snapshot', requireAdmin, adminLimiter, async (_req, res) => {
   if (snapshotRunning) return res.status(429).json({ error: 'Snapshot already in progress' });
   snapshotRunning = true;
@@ -249,7 +274,7 @@ app.post('/api/snapshot', requireAdmin, adminLimiter, async (_req, res) => {
     const rangeKey = s.period || 'weekly';
     const { start, end } = windowFor(rangeKey, s.customRange);
 
-    // Fetch current data via our own API (consistent with UI)
+    // Use our own API to get current view-consistent data
     const lbRes = await fetch(`http://localhost:${PORT}/api/leaderboard?limit=${limit}&range=${encodeURIComponent(rangeKey)}`);
     const lbJson = await lbRes.json();
 
@@ -263,12 +288,13 @@ app.post('/api/snapshot', requireAdmin, adminLimiter, async (_req, res) => {
       bannerTitle: s.bannerTitle,
       socials: s.socials,
       pageSize: s.pageSize,
+      prizeConfig: s.prizeConfig,
       data: Array.isArray(lbJson.data) ? lbJson.data : []
     };
     const jsonFile = path.join(snapshotsDir, `${id}.json`);
     fs.writeFileSync(jsonFile, JSON.stringify(snapshot, null, 2), 'utf8');
 
-    // PNG via Puppeteer hitting the dedicated client route
+    // PNG of dedicated route
     const SITE_ORIGIN = (process.env.SITE_ORIGIN || `http://localhost:${PORT}`).replace(/\/$/, '');
     const url = `${SITE_ORIGIN}/#/snapshot/${id}`;
     const browser = await puppeteer.launch({ args: ['--no-sandbox','--disable-setuid-sandbox'] });
@@ -289,7 +315,7 @@ app.post('/api/snapshot', requireAdmin, adminLimiter, async (_req, res) => {
   }
 });
 
-// ---------- Past listings (protected by default)
+// ---------------- Past (JSON list + details) ----------------
 const pastHandlers = {
   list: (_req, res) => {
     try {
@@ -298,7 +324,14 @@ const pastHandlers = {
         const p = path.join(snapshotsDir, f);
         const j = JSON.parse(fs.readFileSync(p, 'utf8'));
         const img = path.join(snapshotsDir, `${j.id}.png`);
-        return { id: j.id, takenAt: j.takenAt, period: j.period, range: j.range, bannerTitle: j.bannerTitle, image: fs.existsSync(img) ? `/snapshots/${j.id}.png` : null };
+        return {
+          id: j.id,
+          takenAt: j.takenAt,
+          period: j.period,
+          range: j.range,
+          bannerTitle: j.bannerTitle,
+          image: fs.existsSync(img) ? `/snapshots/${j.id}.png` : null
+        };
       }).sort((a,b)=> new Date(b.takenAt) - new Date(a.takenAt));
       res.json({ data: list });
     } catch (e) {
@@ -319,7 +352,7 @@ const pastHandlers = {
   }
 };
 
-// Protect /api/past unless SNAPSHOTS_PUBLIC=true
+// Protect past endpoints & files unless explicitly public
 if (SNAPSHOTS_PUBLIC) {
   app.get('/api/past', pastHandlers.list);
   app.get('/api/past/:id', pastHandlers.get);
@@ -330,20 +363,18 @@ if (SNAPSHOTS_PUBLIC) {
   app.use('/snapshots', requireAdmin, express.static(snapshotsDir));
 }
 
-// ---------- Serve the built frontend (fixes “Cannot GET /” on Render) ----------
+// ---------------- Serve built frontend + SPA fallback ----------------
 app.use(express.static(path.join(__dirname, 'dist')));
-
-// SPA fallback (don’t swallow API/snapshots)
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api') || req.path.startsWith('/snapshots')) return next();
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
-// ---------- Centralized error handler ----------
+// ---------------- Error handler ----------------
 app.use((err, _req, res, _next) => {
   console.error(err);
   res.status(500).json({ error: 'Server error' });
 });
 
-// ---------- Start ----------
+// ---------------- Start ----------------
 app.listen(PORT, () => console.log(`API ready on http://localhost:${PORT}`));
