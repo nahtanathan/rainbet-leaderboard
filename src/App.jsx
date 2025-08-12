@@ -625,7 +625,9 @@ export function AdminControls() {
 }
 
 /* styles (adds podium v2 + rank badges) */
-function Styles(){return(<style>{`
+function Styles() {
+  return (
+    <style>{`
 :root{
   --bg:#0b0c10; --panel:#10121a; --panel2:#0d1017;
   --ink:#e5e7eb; --muted:#a1a1aa;
@@ -698,7 +700,9 @@ function Styles(){return(<style>{`
 .rb-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .rb-btn{padding:10px 14px;border-radius:10px;border:0;background:#fff;color:#0b0c10;font-weight:800;cursor:pointer}
 .rb-msg{color:#cbd5e1}
-`}</style>)}`
+`}</style>
+  )
 }
+
 
 /* end file */
