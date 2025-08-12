@@ -1,0 +1,19 @@
+# Node / build
+node_modules/
+dist/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Env / secrets
+.env
+.env.local
+
+# Editor / OS
+.DS_Store
+.vscode/
+*.swp
+
+# Snapshots (JSON+PNG)
+data/snapshots/

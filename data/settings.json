@@ -1,0 +1,24 @@
+{
+  "period": "monthly",
+  "countdown": {
+    "value": 7,
+    "unit": "days"
+  },
+  "pageSize": 15,
+  "bannerTitle": "$500 Monthly Leaderboard",
+  "socials": [
+    {
+      "name": "Twitter",
+      "url": "https://twitter.com/"
+    },
+    {
+      "name": "Discord",
+      "url": "https://discord.gg/"
+    }
+  ],
+  "customRange": {
+    "enabled": true,
+    "start": "2025-08-01",
+    "end": "2025-08-31"
+  }
+}
