@@ -703,7 +703,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-se
 .rb-root{min-height:100vh;background:
   radial-gradient(900px 480px at 15% -10%, rgba(34,211,238,.10), transparent),
   radial-gradient(900px 520px at 90% 0%, rgba(59,130,246,.08), transparent),
-  var(--bg)}
+ }
 
 /* Header */
 .rb-header{position:sticky;top:0;z-index:10;display:grid;grid-template-columns:1fr auto;align-items:center;gap:16px;padding:16px 20px;border-bottom:1px solid var(--line);backdrop-filter:saturate(1.1) blur(10px);background:rgba(6,8,12,.75)}
@@ -817,7 +817,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-se
 .rb-admin{min-height:100vh;background:
   radial-gradient(800px 460px at 15% -10%, rgba(34,211,238,.10), transparent),
   radial-gradient(800px 500px at 85% 0%, rgba(59,130,246,.08), transparent),
-  var(--bg);color:var(--ink);padding:18px}
+  var(--ink);color:var(--ink);padding:18px}
 .rb-admin-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
 .rb-admin-grid{display:grid;gap:12px;max-width:800px;margin:0 auto;border:1px solid var(--line);background:linear-gradient(180deg,var(--panel),var(--panel2));border-radius:16px;padding:16px}
 .rb-label{display:grid;gap:6px}
