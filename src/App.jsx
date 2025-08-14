@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 
-/* ===== Floating background config ===== */
+/* ===== Floating background config (Rainbet "R" logo) ===== */
 const IMG_SRC = (import.meta?.env?.BASE_URL || '/') + 'rainbet-logo.png' // file in /public
 const BOUNCER_COUNT = 16
 const MIN_SIZE = 64
@@ -216,7 +216,7 @@ function Board() {
     if (r) setRangeInfo(r)
   }
   useEffect(() => {
-    const t = setInterval(() => loadBoard(period, pageSize), 5 * 60 * 1000) // keep silent auto-refresh
+    const t = setInterval(() => loadBoard(period, pageSize), 5 * 60 * 1000) // silent auto-refresh
     return () => clearInterval(t)
   }, [period, pageSize])
 
@@ -249,7 +249,7 @@ function Board() {
           <h1 className="rb-title rb-title-xl">{bannerTitle}</h1>
           <div className="rb-timer-big">Ends in {fmtClock(remaining)}</div>
 
-          {/* New banner under the timer */}
+          {/* Promo banner under the timer */}
           <div className="rb-banner">
             <a href="https://rainbet.com/?r=tris" target="_blank" rel="noopener noreferrer">
               🎯 Use Code <span className="rb-banner-code">Tris</span> on Rainbet.com
@@ -693,11 +693,26 @@ function Admin() {
   )
 }
 
-/* ================= CSS ================= */
+/* ================= THEME & STYLES (Rainbet-inspired) ================= */
 function Styles() {
   return (
     <style>{`
-:root{--bg:#0b0c10;--panel:#10121a;--panel2:#0d1017;--ink:#e5e7eb;--line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.06)}
+/* Palette tuned for Rainbet vibes */
+:root{
+  --bg:#060b10;          /* near-black navy */
+  --panel:#0a1219;       /* deep blue-black */
+  --panel2:#081019;      /* slightly darker */
+  --ink:#e6f0ff;         /* cool light ink */
+  --ink-dim:#b9c6d9;
+  --line:rgba(34,211,238,.25); /* cyan line */
+  --line2:rgba(34,211,238,.15);
+  --c-cyan:#22d3ee;
+  --c-blue:#3b82f6;
+  --c-gold:#f5c84b;
+  --c-silver:#cbd5e1;
+  --c-bronze:#b7743a;
+}
+
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,Arial}
 
@@ -707,156 +722,224 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-se
   z-index:0; pointer-events:none; mix-blend-mode:normal;
 }
 
-/* main content sits above */
+/* main content sits above; transparent overlays so canvas shows */
 .rb-root,.rb-admin{ position:relative; z-index:1; }
-
-/* Transparent overlays so canvas shows through (body keeps solid bg) */
-.rb-root{min-height:100vh;background:
-  radial-gradient(900px 480px at 15% -10%, rgba(34,211,238,.10), transparent),
-  radial-gradient(900px 520px at 90% 0%, rgba(59,130,246,.08), transparent)}
-.rb-admin{min-height:100vh;background:
-  radial-gradient(800px 460px at 15% -10%, rgba(34,211,238,.10), transparent),
-  radial-gradient(800px 500px at 85% 0%, rgba(59,130,246,.08), transparent);
-  color:var(--ink);padding:18px}
+.rb-root{
+  min-height:100vh;
+  background:
+    radial-gradient(900px 480px at 15% -10%, rgba(34,211,238,.12), transparent),
+    radial-gradient(900px 520px at 90% 0%, rgba(59,130,246,.10), transparent);
+}
+.rb-admin{
+  min-height:100vh; padding:18px; color:var(--ink);
+  background:
+    radial-gradient(800px 460px at 15% -10%, rgba(34,211,238,.10), transparent),
+    radial-gradient(800px 500px at 85% 0%, rgba(59,130,246,.09), transparent);
+}
 
 /* Header */
-.rb-header{position:sticky;top:0;z-index:10;display:grid;grid-template-columns:1fr auto;align-items:center;gap:16px;padding:16px 20px;border-bottom:1px solid var(--line);backdrop-filter:saturate(1.1) blur(10px);background:rgba(6,8,12,.75)}
+.rb-header{
+  position:sticky;top:0;z-index:10;display:grid;grid-template-columns:1fr auto;
+  align-items:center;gap:16px;padding:16px 20px;border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg, rgba(10,18,25,.86), rgba(8,16,25,.78));
+  box-shadow:0 10px 30px rgba(0,0,0,.35);
+  backdrop-filter:saturate(1.2) blur(12px)
+}
 .rb-header-centered{grid-template-columns:1fr 1fr 1fr}
 .rb-left-spacer{height:1px}
-.rb-center{display:flex;flex-direction:column;align-items:center;gap:6px}
-.rb-title{margin:0;font-weight:800}
-.rb-title-xl{font-size:34px;text-align:center;letter-spacing:.2px}
-.rb-timer-big{font-size:22px;font-weight:900;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.04)}
+.rb-center{display:flex;flex-direction:column;align-items:center;gap:8px}
+.rb-title{margin:0;font-weight:900;letter-spacing:.3px}
+.rb-title-xl{font-size:36px;text-align:center}
+.rb-timer-big{
+  font-size:24px;font-weight:900;padding:8px 14px;border-radius:999px;
+  border:1px solid var(--line);
+  background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+  box-shadow:inset 0 0 30px rgba(34,211,238,.12), 0 0 20px rgba(59,130,246,.15);
+}
 .rb-header-right{display:flex;gap:12px;justify-self:end}
-.rb-link{color:#9ac2ff;text-decoration:none}
+.rb-link{color:var(--c-cyan);text-decoration:none}
+.rb-link:hover{text-decoration:underline}
 
 /* Promo banner (Use Code Tris) */
 .rb-banner {
-  margin-top: 12px;
-  background: linear-gradient(90deg, #22d3ee 0%, #3b82f6 100%);
+  margin-top: 10px;
+  background: linear-gradient(90deg, var(--c-cyan) 0%, var(--c-blue) 100%);
   padding: 10px 18px;
-  border-radius: 8px;
+  border-radius: 10px;
   text-align: center;
   font-size: 1.15rem;
-  font-weight: 800;
+  font-weight: 900;
   letter-spacing: 0.4px;
   animation: rb-banner-glow 2s ease-in-out infinite alternate;
   border: 1px solid rgba(255,255,255,0.12);
+  color:#071118;
 }
-.rb-banner a { color: var(--bg); text-decoration: none; display: inline-block; }
-.rb-banner-code { color: #ffffff; text-shadow: 0 0 6px rgba(255,255,255,0.8); }
+.rb-banner a { color: #071118; text-decoration: none; display: inline-block; }
+.rb-banner-code { color: #ffffff; text-shadow: 0 0 6px rgba(255,255,255,0.9); }
 @keyframes rb-banner-glow {
-  from { box-shadow: 0 0 6px rgba(34,211,238,0.45); }
-  to   { box-shadow: 0 0 22px rgba(59,130,246,0.85); }
+  from { box-shadow: 0 0 8px rgba(34,211,238,0.45); }
+  to   { box-shadow: 0 0 26px rgba(59,130,246,0.85); }
 }
 
 /* Hero meta & socials */
 .rb-hero{max-width:1100px;margin:12px auto 8px;padding:0 18px;display:grid;gap:10px}
 .rb-hero-center{justify-items:center;text-align:center}
-.rb-hero-meta{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
-.rb-chip{border:1px solid var(--line);background:rgba(255,255,255,.04);padding:6px 10px;border-radius:999px;font-size:14px}
+.rb-hero-meta{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.rb-chip{
+  border:1px solid var(--line);
+  background:linear-gradient(180deg, rgba(34,211,238,.07), rgba(59,130,246,.06));
+  padding:6px 12px;border-radius:999px;font-size:14px;color:var(--ink)
+}
 .rb-hero-socials{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
-.rb-social-link{color:#9ac2ff;text-decoration:none}
+.rb-social-link{color:var(--c-cyan);text-decoration:none}
+.rb-social-link:hover{color:#9acfff}
 
 /* ==== CARD podium (Top 3) ==== */
-.rb-podium-col{max-width:1000px;margin:0 auto 18px;padding:0 18px;display:flex;flex-direction:column;align-items:center;gap:18px}
+.rb-podium-col{max-width:1100px;margin:0 auto 18px;padding:0 18px;display:flex;flex-direction:column;align-items:center;gap:18px}
 .rb-podium-row-23{display:grid;grid-template-columns:1fr;gap:18px;width:100%}
 @media(min-width:860px){.rb-podium-row-23{grid-template-columns:1fr 1fr}}
 
 .rb-card-wrap{display:flex;justify-content:center;align-items:flex-start;width:100%;position:relative}
-.rb-card-wrap-1{max-width:720px;margin:0 auto}
+.rb-card-wrap-1{max-width:760px;margin:0 auto}
 
 .rb-card{
   position:relative;
-  width: min(100%, 680px);
-  border-radius: 18px;
-  border: 1px solid var(--line);
-  background: linear-gradient(180deg, var(--panel), var(--panel2));
-  box-shadow: 0 12px 30px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.06);
-  padding: 20px 22px 34px;
+  width:min(100%, 720px);
+  border-radius:16px;
+  border:1px solid var(--line);
+  background:
+    linear-gradient(180deg, rgba(9,17,25,1), rgba(6,13,20,1));
+  box-shadow:
+    0 12px 30px rgba(0,0,0,.35),
+    inset 0 0 40px rgba(34,211,238,.08),
+    inset 0 1px 0 rgba(255,255,255,.05);
+  padding:22px 22px 38px;
   display:flex; align-items:center; justify-content:center;
   text-align:center;
 }
+
+/* #1 Gold, #2 Silver, #3 Bronze with cyan/blue glints */
 .rb-card-1{
+  border-color: rgba(245,200,75,.55);
   background:
-    radial-gradient(500px 140px at 50% 0%, rgba(255,214,94,.14), transparent),
-    linear-gradient(180deg, #1c1a14, #13120e);
-  border: 1px solid rgba(245,158,11,.35);
+    radial-gradient(600px 160px at 50% 0%, rgba(245,200,75,.15), transparent),
+    linear-gradient(180deg, rgba(11,10,6,1), rgba(16,14,8,1));
+  box-shadow: 0 18px 50px rgba(245,200,75,.15), inset 0 0 40px rgba(34,211,238,.10);
 }
 .rb-card-2{
+  border-color: rgba(203,213,225,.5);
   background:
-    radial-gradient(500px 140px at 50% 0%, rgba(203,213,225,.16), transparent),
-    linear-gradient(180deg, #171a1f, #121419);
-  border: 1px solid rgba(203,213,225,.35);
+    radial-gradient(600px 160px at 50% 0%, rgba(203,213,225,.16), transparent),
+    linear-gradient(180deg, rgba(16,19,24,1), rgba(12,15,20,1));
+  box-shadow: 0 18px 50px rgba(203,213,225,.12), inset 0 0 40px rgba(59,130,246,.10);
 }
 .rb-card-3{
+  border-color: rgba(183,116,58,.55);
   background:
-    radial-gradient(500px 140px at 50% 0%, rgba(187,132,74,.18), transparent),
-    linear-gradient(180deg, #1a1510, #14100c);
-  border: 1px solid rgba(180,83,9,.35);
+    radial-gradient(600px 160px at 50% 0%, rgba(183,116,58,.18), transparent),
+    linear-gradient(180deg, rgba(18,12,8,1), rgba(16,11,7,1));
+  box-shadow: 0 18px 50px rgba(183,116,58,.15), inset 0 0 40px rgba(34,211,238,.08);
 }
 
 .rb-card-content{max-width:90%}
-.rb-card-name{font-weight:900;font-size:20px;letter-spacing:.2px}
-.rb-card-wager{font-weight:900;font-size:28px;margin-top:6px}
+.rb-card-name{font-weight:900;font-size:20px;letter-spacing:.2px;color:#eaf4ff}
+.rb-card-wager{font-weight:900;font-size:28px;margin-top:6px;color:#ffffff}
 .rb-card-prize{
   display:inline-block;margin-top:10px;padding:6px 12px;border-radius:999px;
-  background:rgba(255,255,255,.08);border:1px solid var(--line);font-weight:800
+  background:linear-gradient(180deg, rgba(34,211,238,.12), rgba(59,130,246,.10));
+  border:1px solid var(--line);font-weight:800;color:#e7f6ff
 }
 
 /* Centered flag under card */
 .rb-flag{
   position:absolute;left:50%;transform:translateX(-50%);
-  bottom:-18px;min-width:78px;height:34px;padding:0 12px;
+  bottom:-18px;min-width:82px;height:36px;padding:0 12px;
   display:flex;align-items:center;justify-content:center;
-  color:#0b0c10;font-weight:900;border-radius:8px;box-shadow:0 6px 16px rgba(0,0,0,.3)
+  color:#0b0c10;font-weight:900;border-radius:9px;
+  box-shadow:0 8px 20px rgba(0,0,0,.35)
 }
 .rb-flag::before{
   content:"";position:absolute;bottom:-10px;width:0;height:0;
-  border-left:10px solid transparent;border-right:10px solid transparent;border-top:10px solid;left:50%;transform:translateX(-50%);opacity:.85
+  border-left:10px solid transparent;border-right:10px solid transparent;border-top:10px solid;left:50%;transform:translateX(-50%);opacity:.95
 }
-.rb-flag-1{ background: linear-gradient(180deg,#fbbf24,#f59e0b); }
-.rb-flag-1::before{ border-top-color:#b97609; }
-.rb-flag-2{ background: linear-gradient(180deg,#cbd5e1,#9ca3af); }
-.rb-flag-2::before{ border-top-color:#7c858f; }
-.rb-flag-3{ background: linear-gradient(180deg,#b45309,#92400e); color:#fff; }
-.rb-flag-3::before{ border-top-color:#5e2c08; }
+.rb-flag-1{ background: linear-gradient(180deg,var(--c-gold),#d79e1e); }
+.rb-flag-1::before{ border-top-color:#a87714; }
+.rb-flag-2{ background: linear-gradient(180deg,var(--c-silver),#9aa3af); }
+.rb-flag-2::before{ border-top-color:#7f8a96; }
+.rb-flag-3{ background: linear-gradient(180deg,var(--c-bronze),#7a4d20); color:#fff; }
+.rb-flag-3::before{ border-top-color:#5b3717; }
 .rb-flag-num{ font-size:16px; letter-spacing:.5px }
 
-/* Table */
+/* Table container styled to Rainbet colors */
 .rb-main{max-width:1100px;margin:0 auto;padding:18px}
-.rb-table-wrap{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:rgba(255,255,255,.03)}
+.rb-table-wrap{
+  border:1px solid var(--line);
+  border-radius:16px;overflow:hidden;
+  background:
+    linear-gradient(180deg, rgba(11,18,25,.75), rgba(8,16,25,.72));
+  box-shadow:0 10px 30px rgba(0,0,0,.35), inset 0 0 30px rgba(34,211,238,.06);
+}
 .rb-table{width:100%;border-collapse:separate;border-spacing:0}
-.rb-th{font-weight:700;font-size:14px;text-align:left;color:#d4d4d8;padding:12px;background:rgba(255,255,255,.05)}
+.rb-th{
+  font-weight:800;font-size:14px;text-align:left;color:#d9e7ff;padding:12px;
+  background:linear-gradient(180deg, rgba(34,211,238,.10), rgba(59,130,246,.10));
+  border-bottom:1px solid var(--line2)
+}
 .rb-th-right{text-align:right}
 .rb-tr{border-top:1px solid var(--line2)}
 .rb-td{padding:12px;vertical-align:middle}
 .rb-td-right{text-align:right}
-.rb-td-rank{color:#a1a1aa;font-weight:900}
-.rb-strong{font-weight:900}
-.rb-paychip{display:inline-block;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid var(--line);font-weight:700}
+.rb-td-rank{color:#9ebbe0;font-weight:900}
+.rb-strong{font-weight:900;color:#eaf4ff}
+.rb-paychip{
+  display:inline-block;padding:6px 10px;border-radius:999px;
+  background:linear-gradient(180deg, rgba(34,211,238,.12), rgba(59,130,246,.10));
+  border:1px solid var(--line);font-weight:800;color:#e7f6ff
+}
 
 /* Footer */
-.rb-footer{display:flex;justify-content:space-between;align-items:center;color:#a1a1aa;font-size:12px;margin-top:16px}
+.rb-footer{
+  display:flex;justify-content:space-between;align-items:center;
+  color:var(--ink-dim);font-size:12px;margin-top:16px
+}
 
 /* Skeleton shimmer */
 .rb-skel .rb-skel-bar{
   height:12px;border-radius:8px;
-  background:linear-gradient(90deg,rgba(255,255,255,.08),rgba(255,255,255,.16),rgba(255,255,255,.08));
-  background-size:200% 100%;animation:rb-shim 1.2s linear infinite
+  background:linear-gradient(90deg,rgba(255,255,255,.08),rgba(255,255,255,.18),rgba(255,255,255,.08));
+  background-size:200% 100%;animation:rb-shim 1.1s linear infinite
 }
 @keyframes rb-shim{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
 /* Admin */
 .rb-admin-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-.rb-admin-grid{display:grid;gap:12px;max-width:800px;margin:0 auto;border:1px solid var(--line);background:linear-gradient(180deg,var(--panel),var(--panel2));border-radius:16px;padding:16px}
+.rb-admin-grid{
+  display:grid;gap:12px;max-width:800px;margin:0 auto;
+  border:1px solid var(--line);
+  background:linear-gradient(180deg, rgba(11,18,25,.85), rgba(8,16,25,.82));
+  border-radius:16px;padding:16px;
+  box-shadow:0 10px 28px rgba(0,0,0,.35), inset 0 0 30px rgba(59,130,246,.06);
+}
 .rb-label{display:grid;gap:6px}
-.rb-input{padding:10px;border-radius:10px;border:1px solid var(--line);background:#0d1117;color:#e5e7eb}
-.rb-hint{color:#9aa3ad}
+.rb-input{
+  padding:10px;border-radius:10px;border:1px solid var(--line);
+  background:#0d1117;color:#e5f0ff
+}
+.rb-hint{color:#9aaec4}
 .rb-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.rb-btn{padding:10px 14px;border-radius:10px;border:0;background:#fff;color:#0b0c10;font-weight:800;cursor:pointer}
+.rb-btn{
+  padding:10px 14px;border-radius:10px;border:0;cursor:pointer;
+  font-weight:900;color:#071118;
+  background:linear-gradient(90deg, var(--c-cyan), var(--c-blue));
+  box-shadow:0 8px 22px rgba(59,130,246,.25)
+}
+.rb-btn:hover{filter:brightness(1.07)}
 .rb-msg{color:#cbd5e1}
-.rb-pill{display:inline-block;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid var(--line);font-weight:800}
+.rb-pill{
+  display:inline-block;padding:6px 10px;border-radius:999px;
+  background:linear-gradient(180deg, rgba(34,211,238,.12), rgba(59,130,246,.10));
+  border:1px solid var(--line);font-weight:800;color:#e7f6ff
+}
 `}</style>
   )
 }
