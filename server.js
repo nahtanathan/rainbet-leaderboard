@@ -128,7 +128,7 @@ function rowToSettingsCamel(row) {
 
 function camelToSettingsRow(payload) {
   return {
-    id: 'singleton',
+    id: 1,
     period: payload.period || 'weekly',
     countdown_end_iso: payload.countdownEndISO || '',
     page_size: Number(payload.pageSize || 15),
@@ -192,7 +192,7 @@ app.get('/api/settings', async (_req, res) => {
     const { data, error } = await supabase
       .from('settings')
       .select('*')
-      .eq('id', 'singleton')
+      .eq('id', 1)
       .maybeSingle()
     if (error) return res.status(500).json({ error: error.message })
     res.json(rowToSettingsCamel(data))
@@ -224,7 +224,7 @@ app.get('/api/range', async (req, res) => {
     const qPeriod = (req.query.period || '').toString() || null
     let settings = {}
     if (supabase) {
-      const { data } = await supabase.from('settings').select('*').eq('id', 'singleton').maybeSingle()
+      const { data } = await supabase.from('settings').select('*').eq('id', 1).maybeSingle()
       settings = rowToSettingsCamel(data)
     }
     const period = qPeriod || settings.period || 'weekly'
@@ -241,7 +241,7 @@ app.get('/api/leaderboard', async (req, res) => {
     const limit = Math.max(1, Math.min(100, Number(req.query.limit || 15)))
     let settings = {}
     if (supabase) {
-      const { data } = await supabase.from('settings').select('*').eq('id', 'singleton').maybeSingle()
+      const { data } = await supabase.from('settings').select('*').eq('id', 1).maybeSingle()
       settings = rowToSettingsCamel(data)
     }
     const qryRange = (req.query.range || '').toString() || null
@@ -292,7 +292,7 @@ app.post('/api/snapshot', async (_req, res) => {
   try {
     if (!supabase) return res.status(500).json({ error: 'Supabase not configured' })
 
-    const { data: s } = await supabase.from('settings').select('*').eq('id', 'singleton').maybeSingle()
+    const { data: s } = await supabase.from('settings').select('*').eq('id', 1).maybeSingle()
     const settings = rowToSettingsCamel(s) || {}
     const period = settings.period || 'weekly'
     const range = computeRange({ period, customRange: settings.customRange })
