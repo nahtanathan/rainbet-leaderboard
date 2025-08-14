@@ -1,13 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 
-/* ===== Config for floating background logo ===== */
-const IMG_SRC = '/rainbet-logo.png' // put file in /public as rainbet-logo.png
-const BOUNCER_COUNT = 10            // number of floating logos
-const MIN_SIZE = 48                 // px
-const MAX_SIZE = 120                // px
-const MIN_SPEED = 30                // px/sec
-const MAX_SPEED = 90                // px/sec
-const GLOBAL_ALPHA = 0.18           // transparency (0..1)
+/* ===== Floating background config ===== */
+const IMG_SRC = (import.meta?.env?.BASE_URL || '/') + 'rainbet-logo.png' // file in /public
+const BOUNCER_COUNT = 16
+const MIN_SIZE = 64
+const MAX_SIZE = 140
+const MIN_SPEED = 30
+const MAX_SPEED = 90
+const GLOBAL_ALPHA = 0.18
 
 /* ===== Utilities ===== */
 const PERIODS = { weekly: 'Weekly', biweekly: 'Biweekly', monthly: 'Monthly' }
@@ -52,6 +52,8 @@ function BackgroundBouncers() {
     const ctx = canvas.getContext('2d')
     let w = 0, h = 0, raf, last = performance.now(), dpr = 1
     const img = new Image()
+    img.onload = () => console.log('[bg] logo loaded:', IMG_SRC)
+    img.onerror = (e) => console.warn('[bg] logo failed:', IMG_SRC, e)
     img.src = IMG_SRC
 
     const balls = [] // {x,y,vx,vy,size,rot,vr}
@@ -63,8 +65,8 @@ function BackgroundBouncers() {
       canvas.height = Math.floor(h * dpr)
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     }
+    const rand = (a, b) => a + Math.random() * (b - a)
 
-    function rand(a, b) { return a + Math.random() * (b - a) }
     function initBalls() {
       balls.length = 0
       for (let i = 0; i < BOUNCER_COUNT; i++) {
@@ -74,8 +76,8 @@ function BackgroundBouncers() {
         const vx = Math.cos(angle) * speed
         const vy = Math.sin(angle) * speed
         balls.push({
-          x: rand(size, w - size),
-          y: rand(size, h - size),
+          x: rand(size, Math.max(size, w - size)),
+          y: rand(size, Math.max(size, h - size)),
           vx, vy,
           size,
           rot: rand(0, Math.PI * 2),
@@ -122,7 +124,7 @@ function BackgroundBouncers() {
           b.x = Math.min(Math.max(0, b.x), Math.max(0, w - b.size))
           b.y = Math.min(Math.max(0, b.y), Math.max(0, h - b.size))
         }
-      }, 50)
+      }, 80)
     })
     ro.observe(canvas)
 
@@ -186,6 +188,7 @@ function Board() {
     })()
   }, [])
 
+  // tick every second for timer
   useEffect(() => {
     const t = setInterval(() => {
       tick.current++
@@ -200,6 +203,7 @@ function Board() {
     return Math.max(0, Math.floor(ms / 1000))
   }, [countdownEndISO, tick.current])
 
+  // when timer hits 0, request a snapshot once
   useEffect(() => {
     if (remaining === 0 && countdownEndISO && !snapshotOnce.current) {
       snapshotOnce.current = true
@@ -212,7 +216,7 @@ function Board() {
     if (r) setRangeInfo(r)
   }
   useEffect(() => {
-    const t = setInterval(() => loadBoard(period, pageSize), 5 * 60 * 1000)
+    const t = setInterval(() => loadBoard(period, pageSize), 5 * 60 * 1000) // keep silent auto-refresh
     return () => clearInterval(t)
   }, [period, pageSize])
 
@@ -230,20 +234,27 @@ function Board() {
   }
 
   const first = rows[0],
-    second = rows[1],
-    third = rows[2],
-    rest = rows.slice(3)
+        second = rows[1],
+        third = rows[2],
+        rest = rows.slice(3)
 
   return (
     <div className="rb-root">
       <Styles />
 
-      {/* Header with centered title + timer */}
+      {/* Header with centered title + timer + banner */}
       <header className="rb-header rb-header-centered">
         <div className="rb-left-spacer" />
         <div className="rb-center">
           <h1 className="rb-title rb-title-xl">{bannerTitle}</h1>
           <div className="rb-timer-big">Ends in {fmtClock(remaining)}</div>
+
+          {/* New banner under the timer */}
+          <div className="rb-banner">
+            <a href="https://rainbet.com/?r=tris" target="_blank" rel="noopener noreferrer">
+              🎯 Use Code <span className="rb-banner-code">Tris</span> on Rainbet.com
+            </a>
+          </div>
         </div>
         <div className="rb-header-right">
           <a className="rb-link" href="#/past">Past</a>
@@ -340,7 +351,6 @@ function CardPodium({ place, item, prize }) {
     </div>
   )
 }
-
 const CardSkeleton = ({ place }) => {
   const tone = place === 1 ? 'rb-card-1' : place === 2 ? 'rb-card-2' : 'rb-card-3'
   return (
@@ -573,7 +583,7 @@ function Admin() {
     e.preventDefault()
     setLoginError('')
     const u = e.target.user.value.trim(),
-      p = e.target.pass.value.trim()
+          p = e.target.pass.value.trim()
     const token = 'Basic ' + btoa(u + ':' + p)
     const ok = await fetch('/api/auth', { headers: { Authorization: token } })
       .then((r) => r.ok)
@@ -700,10 +710,14 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-se
 /* main content sits above */
 .rb-root,.rb-admin{ position:relative; z-index:1; }
 
+/* Transparent overlays so canvas shows through (body keeps solid bg) */
 .rb-root{min-height:100vh;background:
   radial-gradient(900px 480px at 15% -10%, rgba(34,211,238,.10), transparent),
-  radial-gradient(900px 520px at 90% 0%, rgba(59,130,246,.08), transparent),
- }
+  radial-gradient(900px 520px at 90% 0%, rgba(59,130,246,.08), transparent)}
+.rb-admin{min-height:100vh;background:
+  radial-gradient(800px 460px at 15% -10%, rgba(34,211,238,.10), transparent),
+  radial-gradient(800px 500px at 85% 0%, rgba(59,130,246,.08), transparent);
+  color:var(--ink);padding:18px}
 
 /* Header */
 .rb-header{position:sticky;top:0;z-index:10;display:grid;grid-template-columns:1fr auto;align-items:center;gap:16px;padding:16px 20px;border-bottom:1px solid var(--line);backdrop-filter:saturate(1.1) blur(10px);background:rgba(6,8,12,.75)}
@@ -715,6 +729,26 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-se
 .rb-timer-big{font-size:22px;font-weight:900;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.04)}
 .rb-header-right{display:flex;gap:12px;justify-self:end}
 .rb-link{color:#9ac2ff;text-decoration:none}
+
+/* Promo banner (Use Code Tris) */
+.rb-banner {
+  margin-top: 12px;
+  background: linear-gradient(90deg, #22d3ee 0%, #3b82f6 100%);
+  padding: 10px 18px;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  animation: rb-banner-glow 2s ease-in-out infinite alternate;
+  border: 1px solid rgba(255,255,255,0.12);
+}
+.rb-banner a { color: var(--bg); text-decoration: none; display: inline-block; }
+.rb-banner-code { color: #ffffff; text-shadow: 0 0 6px rgba(255,255,255,0.8); }
+@keyframes rb-banner-glow {
+  from { box-shadow: 0 0 6px rgba(34,211,238,0.45); }
+  to   { box-shadow: 0 0 22px rgba(59,130,246,0.85); }
+}
 
 /* Hero meta & socials */
 .rb-hero{max-width:1100px;margin:12px auto 8px;padding:0 18px;display:grid;gap:10px}
@@ -814,10 +848,6 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-se
 @keyframes rb-shim{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
 /* Admin */
-.rb-admin{min-height:100vh;background:
-  radial-gradient(800px 460px at 15% -10%, rgba(34,211,238,.10), transparent),
-  radial-gradient(800px 500px at 85% 0%, rgba(59,130,246,.08), transparent),
-  var(--ink);color:var(--ink);padding:18px}
 .rb-admin-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
 .rb-admin-grid{display:grid;gap:12px;max-width:800px;margin:0 auto;border:1px solid var(--line);background:linear-gradient(180deg,var(--panel),var(--panel2));border-radius:16px;padding:16px}
 .rb-label{display:grid;gap:6px}
