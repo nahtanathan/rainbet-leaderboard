@@ -7,7 +7,7 @@ const MIN_SIZE = 48                 // px
 const MAX_SIZE = 120                // px
 const MIN_SPEED = 30                // px/sec
 const MAX_SPEED = 90                // px/sec
-const GLOBAL_ALPHA = 0.08           // transparency (0..1)
+const GLOBAL_ALPHA = 0.18           // transparency (0..1)
 
 /* ===== Utilities ===== */
 const PERIODS = { weekly: 'Weekly', biweekly: 'Biweekly', monthly: 'Monthly' }
